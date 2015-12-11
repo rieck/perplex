@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Perplex - Plex-base Movie Renamer
+# Perplex - A Movie Renamer for Plex Metadata
 # Copyright (c) 2015 Konrad Rieck (konrad@mlsec.org)
 
 import argparse

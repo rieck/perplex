@@ -8,13 +8,13 @@ import os
 import shutil
 import json
 import gzip
-
 import progressbar as pb
 
 # Default path to metadata database
 dbpath = "Plug-in Support/Databases/com.plexapp.plugins.library.db"
 
-def build_db(plex_dir, movies = {}):
+
+def build_db(plex_dir, movies={}):
     """ Build movie database from sqlite database """
 
     dbfile = os.path.join(plex_dir, *dbpath.split("/"))
@@ -41,7 +41,7 @@ def build_db(plex_dir, movies = {}):
     return movies
 
 
-def build_map(movies, mapping = []):
+def build_map(movies, mapping=[]):
     """ Build mapping to new names """
 
     for title, year, files in movies.values():
@@ -59,22 +59,20 @@ def build_map(movies, mapping = []):
 
 
 def copy_rename(mapping, dest):
-
     pbar = pb.ProgressBar()
     for old_name, new_name in pbar(mapping):
         dp = os.path.join(dest, os.path.dirname(new_name))
         fp = os.path.join(dp, os.path.basename(new_name))
 
-	try:
+        try:
             if not os.path.exists(dp):
                 os.makedirs(dp)
 
-	    if not os.path.exists(fp):
+            if not os.path.exists(fp):
                 shutil.copy(old_name, fp)
-                
+
         except Exception, e:
-            print str(e)	
-            
+            print str(e)
 
 
 if __name__ == "__main__":

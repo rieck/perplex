@@ -3,11 +3,13 @@
 # Copyright (c) 2015 Konrad Rieck (konrad@mlsec.org)
 
 import argparse
-import sqlite3
+import gzip
+import json
 import os
 import shutil
-import json
-import gzip
+import sqlite3
+import sys
+
 import progressbar as pb
 
 # Default path to metadata database
@@ -59,7 +61,11 @@ def build_map(movies, mapping=[]):
 
 
 def copy_rename(mapping, dest):
-    pbar = pb.ProgressBar()
+    """ Copy and rename files to destination """
+
+    widgets = [pb.Percentage(), ' ', pb.Bar(), ' ', pb.ETA()]
+    pbar = pb.ProgressBar(widgets=widgets)
+
     for old_name, new_name in pbar(mapping):
         dp = os.path.join(dest, os.path.dirname(new_name))
         fp = os.path.join(dp, os.path.basename(new_name))
@@ -83,9 +89,9 @@ if __name__ == "__main__":
     parser.add_argument('--dest', metavar='<dir>', type=str,
                         help='copy and rename files to directory')
     parser.add_argument('--save', metavar='<file>', type=str,
-                        help='save mapping of movie titles')
+                        help='save database of movie titles and files')
     parser.add_argument('--load', metavar='<file>', type=str,
-                        help='load mapping of movie titles')
+                        help='load database of movie titles and files')
 
     args = parser.parse_args()
 
@@ -93,13 +99,13 @@ if __name__ == "__main__":
         movies = build_db(args.plex)
         mapping = build_map(movies)
     elif args.load:
-        mapping = json.load(gzip.open(args.load))
+        movies, mapping = json.load(gzip.open(args.load))
     else:
-        print "Error: Provide a Plex database or database of movie titles."
+        print "Error: Provide a Plex database or stored database."
         sys.exit(-1)
 
     if args.save:
-        json.dump(mapping, gzip.open(args.save, 'w'))
+        json.dump((movies, mapping), gzip.open(args.save, 'w'))
 
     if args.dest:
         copy_rename(mapping, args.dest)

@@ -19,6 +19,7 @@ dbpath = "Plug-in Support/Databases/com.plexapp.plugins.library.db"
 def build_db(plex_dir, movies={}):
     """ Build movie database from sqlite database """
 
+    print "Analyzing Plex database: ",
     dbfile = os.path.join(plex_dir, *dbpath.split("/"))
     db = sqlite3.connect(dbfile)
 
@@ -35,11 +36,15 @@ def build_db(plex_dir, movies={}):
         SELECT mp.file FROM media_items AS mi, media_parts AS mp
         WHERE mi.metadata_item_id = %s AND mi.id = mp.media_item_id """
 
+    files = 0
     for id in movies:
         for file in db.execute(query % id):
             movies[id][2].append(file[0])
+            files += 1
 
     db.close()
+    print "Found %d movies and %d files" % (len(movies), files)
+
     return movies
 
 
@@ -99,13 +104,16 @@ if __name__ == "__main__":
         movies = build_db(args.plex)
         mapping = build_map(movies)
     elif args.load:
+        print "Loading metadata from " + args.load
         movies, mapping = json.load(gzip.open(args.load))
     else:
         print "Error: Provide a Plex database or stored database."
         sys.exit(-1)
 
     if args.save:
+        print "Saving metadata to " + args.save
         json.dump((movies, mapping), gzip.open(args.save, 'w'))
 
     if args.dest:
+        print "Copying renamed files to " + args.dest
         copy_rename(mapping, args.dest)

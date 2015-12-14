@@ -132,5 +132,5 @@ if __name__ == "__main__":
         print "Building file mapping for " + args.dest
         mapping = build_map(movies, args.dest)
 
-        #print "Copying renamed files to " + args.dest
-        #copy_rename(mapping, args.dest)
+        print "Copying renamed files to " + args.dest
+        copy_rename(mapping, args.dest)

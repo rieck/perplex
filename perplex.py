@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf8 -*-
 # Perplex - A Movie Renamer for Plex Metadata
 # Copyright (c) 2015 Konrad Rieck (konrad@mlsec.org)
 
@@ -12,6 +13,8 @@ import sys
 
 import progressbar as pb
 
+# Chars to remove from titles
+del_chars = '.[]()'
 
 def find_db(plex_dir, name):
     """ Search for database file in directory """
@@ -36,8 +39,9 @@ def build_db(plex_dir, movies={}):
         WHERE metadata_type = 1 AND originally_available_at """
 
     for row in db.execute(query):
+        title = filter(lambda x: x not in del_chars, row[1])
         year = row[2].split('-')[0]
-        movies[row[0]] = (row[1], year, [])
+        movies[row[0]] = (title, year, [])
 
     # Get files for each movie
     query = """

@@ -12,24 +12,32 @@ import sys
 
 import progressbar as pb
 
-# Default path to metadata database
-dbpath = "Plug-in Support/Databases/com.plexapp.plugins.library.db"
 
+def find_db(plex_dir, name):
+    """ Search for database file in directory """
+
+    for root, dirs, files in os.walk(plex_dir):
+        for file in files:
+            if file == name:
+                return os.path.join(root, file)
+
+    return None
 
 def build_db(plex_dir, movies={}):
     """ Build movie database from sqlite database """
 
-    print "Analyzing Plex database: ",
-    dbfile = os.path.join(plex_dir, *dbpath.split("/"))
+    print "Analyzing Plex database:",
+    dbfile = find_db(plex_dir, "com.plexapp.plugins.library.db")
     db = sqlite3.connect(dbfile)
 
     # Select only movies with year
     query = """
-        SELECT id, title, year FROM metadata_items
-        WHERE metadata_type = 1 AND year """
+        SELECT id, title, originally_available_at FROM metadata_items
+        WHERE metadata_type = 1 AND originally_available_at """
 
     for row in db.execute(query):
-        movies[row[0]] = (row[1], row[2], [])
+        year = row[2].split('-')[0]
+        movies[row[0]] = (row[1], year, [])
 
     # Get files for each movie
     query = """
@@ -43,12 +51,12 @@ def build_db(plex_dir, movies={}):
             files += 1
 
     db.close()
-    print "Found %d movies and %d files" % (len(movies), files)
+    print "%d movies and %d files" % (len(movies), files)
 
     return movies
 
 
-def build_map(movies, mapping=[]):
+def build_map(movies, dest, mapping=[]):
     """ Build mapping to new names """
 
     for title, year, files in movies.values():
@@ -59,9 +67,11 @@ def build_map(movies, mapping=[]):
             template += " - part%d" % (i + 1) if len(files) > 1 else ""
             template += ext
 
-            new_name = os.path.join(*template.split("/"))
+            dest = os.path.normpath(dest)
+            new_name = os.path.join(dest, *template.split("/"))
             mapping.append((old_name, new_name))
 
+    mapping = filter(lambda (x,y): x.lower() != y.lower(), mapping)
     return mapping
 
 
@@ -102,18 +112,21 @@ if __name__ == "__main__":
 
     if args.plex:
         movies = build_db(args.plex)
-        mapping = build_map(movies)
     elif args.load:
         print "Loading metadata from " + args.load
-        movies, mapping = json.load(gzip.open(args.load))
+        movies = json.load(gzip.open(args.load))
     else:
         print "Error: Provide a Plex database or stored database."
         sys.exit(-1)
 
     if args.save:
         print "Saving metadata to " + args.save
-        json.dump((movies, mapping), gzip.open(args.save, 'w'))
+        json.dump(movies, gzip.open(args.save, 'w'))
+
 
     if args.dest:
-        print "Copying renamed files to " + args.dest
-        copy_rename(mapping, args.dest)
+        print "Building file mapping for " + args.dest
+        mapping = build_map(movies, args.dest)
+
+        #print "Copying renamed files to " + args.dest
+        #copy_rename(mapping, args.dest)

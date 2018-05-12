@@ -79,22 +79,27 @@ def build_map(movies, dest, mapping=[]):
     return mapping
 
 
-def copy_rename(mapping, dest):
+def copy_rename(mapping, dest, dry):
     """ Copy and rename files to destination """
-
-    widgets = [pb.Percentage(), ' ', pb.Bar(), ' ', pb.ETA()]
+    if dry:
+        widgets = ['']
+    else:
+        widgets = [pb.Percentage(), ' ', pb.Bar(), ' ', pb.ETA()]
     pbar = pb.ProgressBar(widgets=widgets)
-
     for old_name, new_name in pbar(mapping):
         dp = os.path.join(dest, os.path.dirname(new_name))
         fp = os.path.join(dp, os.path.basename(new_name))
 
         try:
             if not os.path.exists(dp):
-                os.makedirs(dp)
+                if not dry:
+                    os.makedirs(dp)
 
             if not os.path.exists(fp):
-                shutil.copy(old_name, fp)
+                if dry:
+                    print "%s\n    %s" % (old_name,fp)
+                else:
+                    shutil.copy(old_name, fp)
 
         except Exception, e:
             print str(e)
@@ -111,7 +116,9 @@ if __name__ == "__main__":
                         help='save database of movie titles and files')
     parser.add_argument('--load', metavar='<file>', type=str,
                         help='load database of movie titles and files')
-
+    parser.add_argument('--dry', action='store_true',
+                        help='show dry run of what will happen')
+    parser.set_defaults(dry=False)
     args = parser.parse_args()
 
     if args.plex:
@@ -131,6 +138,6 @@ if __name__ == "__main__":
     if args.dest:
         print "Building file mapping for " + args.dest
         mapping = build_map(movies, args.dest)
-
         print "Copying renamed files to " + args.dest
-        copy_rename(mapping, args.dest)
+        copy_rename(mapping, args.dest,args.dry)
+

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # -*- coding: utf8 -*-
 # Perplex - A Movie Renamer for Plex Metadata
 # Copyright (c) 2015 Konrad Rieck (konrad@mlsec.org)

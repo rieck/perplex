@@ -1,1 +1,2 @@
-progressbar==2.3
+progressbar==2.5
+
